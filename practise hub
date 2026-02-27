@@ -1,0 +1,41 @@
+// src/features/practice-hub/PracticeHub.tsx
+import GaryMascot from '@/components/gary/GaryMascot';
+
+export default function PracticeHub() {
+  const activities = [
+    { name: 'Role Plays', xp: 25, desc: 'Converse with Gary in 575+ scenarios' },
+    { name: 'Teach Mode', xp: 35, desc: 'Sit back — Gary teaches you' },
+    { name: 'Oral Mode', xp: 30, desc: 'Record & get speaking feedback' },
+    { name: 'Listening Mode', xp: 25, desc: 'Deep audio challenges' },
+    { name: 'Composition Mode', xp: 40, desc: 'Write essays & get corrections' },
+    { name: 'Flashcards', xp: 20, desc: 'Spaced repetition vocab' },
+    { name: 'Mini-Games', xp: '15–30', desc: 'Quick fun drills' },
+    // Add the rest as cards...
+  ];
+
+  return (
+    <div className="bg-white rounded-2xl shadow-xl p-8">
+      <h1 className="text-3xl font-bold text-center mb-8">Practice Hub</h1>
+      <p className="text-center text-gray-600 mb-10">
+        Unlimited, free practice — no hearts or energy lost!
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {activities.map((act, i) => (
+          <div
+            key={i}
+            className="bg-gradient-to-br from-blue-50 to-purple-50 p-6 rounded-xl border border-blue-100 hover:shadow-lg transition-shadow cursor-pointer"
+          >
+            <h3 className="text-xl font-semibold mb-2">{act.name}</h3>
+            <p className="text-gray-600 mb-4">{act.desc}</p>
+            <div className="text-sm font-medium text-blue-600">
+              {act.xp} XP per session
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <GaryMascot context="random" />
+    </div>
+  );
+}
