@@ -131,3 +131,212 @@ export default function EnglishSection() {
     </div>
   );
 }
+import { useUserStore } from '@/store/useUserStore';
+import { Gem, Heart, Zap, Flame } from 'lucide-react';
+
+export default function TopBar() {
+  const { gems, hearts, energy, streak, currentCourse, setCurrentCourse } = useUserStore();
+
+  return (
+    <header className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-sm z-50">
+      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        {/* Course Selector */}
+        <select
+          value={currentCourse}
+          onChange={(e) => setCurrentCourse(e.target.value as any)}
+          className="px-3 py-1.5 bg-gray-100 border rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="english">English</option>
+          <option value="chinese">Chinese</option>
+          <option value="japanese">Japanese</option>
+          <option value="math">Math</option>
+          <option value="science">Science</option>
+        </select>
+
+        {/* Resources */}
+        <div className="flex items-center gap-5 text-sm">
+          <div className="flex items-center gap-1.5">
+            <Gem className="w-5 h-5 text-purple-600" />
+            <span className="font-semibold">{gems}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Heart className="w-5 h-5 text-red-500" />
+            <span className="font-semibold">{hearts}/3</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Zap className="w-5 h-5 text-yellow-500" />
+            <span className="font-semibold">{energy}/40</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Flame className="w-5 h-5 text-orange-500" />
+            <span className="font-semibold">{streak}d</span>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}import { useState } from 'react';
+import { useUserStore } from '@/store/useUserStore';
+import GaryMascot from '@/components/gary/GaryMascot';
+
+export default function LessonScreen() {
+  const { loseHeart, useEnergy, hearts, energy } = useUserStore();
+  const [currentQuestion, setCurrentQuestion] = useState(1);
+  const [showExplain, setShowExplain] = useState(false);
+  const totalQuestions = 20;
+
+  const handleWrongAnswer = () => {
+    if (hearts > 0) {
+      loseHeart();
+    } else if (energy > 0) {
+      useEnergy();
+    }
+    setShowExplain(true);
+  };
+
+  const handleNext = () => {
+    if (currentQuestion < totalQuestions) {
+      setCurrentQuestion(currentQuestion + 1);
+      setShowExplain(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 pt-20 pb-24 px-6">
+      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8">
+        <h2 className="text-2xl font-bold text-center mb-6">
+          Question {currentQuestion} of {totalQuestions}
+        </h2>
+
+        {/* Progress bar */}
+        <div className="w-full bg-gray-200 rounded-full h-2.5 mb-8">
+          <div
+            className="bg-blue-600 h-2.5 rounded-full transition-all"
+            style={{ width: `${(currentQuestion / totalQuestions) * 100}%` }}
+          />
+        </div>
+
+        {/* Question placeholder */}
+        <div className="text-center mb-10">
+          <p className="text-xl font-medium mb-4">
+            What does "こんにちは" mean in English?
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            {['Hello', 'Goodbye', 'Thank you', 'Please'].map((opt, i) => (
+              <button
+                key={i}
+                onClick={i === 0 ? handleNext : handleWrongAnswer}
+                className={`p-4 rounded-lg border-2 font-medium transition-all ${
+                  i === 0
+                    ? 'border-green-500 hover:bg-green-50'
+                    : 'border-red-300 hover:bg-red-50'
+                }`}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Explain My Mistakes popup */}
+        {showExplain && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl">
+              <h3 className="text-xl font-bold mb-4">Let's learn from this!</h3>
+              <p className="text-gray-700 mb-6">
+                "こんにちは" means "Hello" in English. It's a polite greeting used any time of day.
+                <br /><br />
+                Common mistake: Mixing it with "こんばんは" (good evening).
+              </p>
+              <button
+                onClick={() => setShowExplain(false)}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg w-full font-medium hover:bg-blue-700"
+              >
+                Got it! Next question
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Gary appears on mistake */}
+      {showExplain && <GaryMascot context="mistake" />}
+    </div>
+  );
+}import TopBar from './components/layout/TopBar';
+import EnglishSection from './features/english/EnglishSection';
+import LessonScreen from './features/lesson/LessonScreen';
+import GaryMascot from './components/gary/GaryMascot';
+
+function App() {
+  // Toggle between map and lesson for demo
+  const [showLesson, setShowLesson] = useState(false);
+
+  return (
+    <div className="relative min-h-screen">
+      <TopBar />
+
+      {showLesson ? (
+        <LessonScreen />
+      ) : (
+        <>
+          <EnglishSection />
+          <button
+            onClick={() => setShowLesson(true)}
+            className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-8 py-4 rounded-full shadow-xl hover:bg-green-700 text-lg font-bold z-40"
+          >
+            Start Lesson Demo
+          </button>
+        </>
+      )}
+
+      <GaryMascot context="welcome" streak={useUserStore.getState().streak} />
+    </div>
+  );
+}
+
+export default App;// src/App.tsx
+import { useState } from 'react';
+import TopBar from './components/layout/TopBar';
+import EnglishSection from './features/english/EnglishSection';
+import LessonScreen from './features/lesson/LessonScreen';
+import PracticeHub from './features/practice-hub/PracticeHub';
+import GaryMascot from './components/gary/GaryMascot';
+import { useUserStore } from './store/useUserStore';
+
+export default function App() {
+  const [view, setView] = useState<'dashboard' | 'lesson' | 'practice'>('dashboard');
+
+  return (
+    <div className="relative min-h-screen bg-gray-50">
+      <TopBar />
+
+      <main className="pt-20 pb-24 px-4 max-w-7xl mx-auto">
+        {view === 'dashboard' && (
+          <>
+            <EnglishSection />
+            <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex gap-4 z-40">
+              <button
+                onClick={() => setView('lesson')}
+                className="bg-blue-600 text-white px-8 py-4 rounded-full shadow-xl hover:bg-blue-700 text-lg font-bold"
+              >
+                Start Lesson
+              </button>
+              <button
+                onClick={() => setView('practice')}
+                className="bg-purple-600 text-white px-8 py-4 rounded-full shadow-xl hover:bg-purple-700 text-lg font-bold"
+              >
+                Practice Hub
+              </button>
+            </div>
+          </>
+        )}
+
+        {view === 'lesson' && <LessonScreen />}
+        {view === 'practice' && <PracticeHub />}
+      </main>
+
+      <GaryMascot context="welcome" streak={useUserStore.getState().streak} />
+    </div>
+  );
+}
