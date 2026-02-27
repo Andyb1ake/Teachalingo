@@ -1,1 +1,1 @@
-# Teqchalingo
+# Teachalingo
