@@ -1,0 +1,154 @@
+// src/features/course-map/CourseMap.tsx
+import { useUserStore } from '@/store/useUserStore';
+import { Gem, Star, Lock } from 'lucide-react';
+import { useState } from 'react';
+
+interface Unit {
+  id: number;
+  completed: boolean;
+  current: boolean;
+  hasChest: boolean; // 1 or 3 chests depending on course
+}
+
+interface CourseMapProps {
+  course: 'english' | 'chinese' | 'japanese' | 'math' | 'science';
+  units: Unit[]; // Pass or fetch from store/mock
+}
+
+export default function CourseMap({ course, units }: CourseMapProps) {
+  const { currentCourse } = useUserStore();
+  const [selectedUnit, setSelectedUnit] = useState<number | null>(null);
+
+  // Mock example: 8 circles per unit (English style) or 15 (Chinese/Japanese)
+  const circlesPerUnit = currentCourse === 'english' ? 8 : 15;
+
+  return (
+    <div className="relative w-full h-[600px] overflow-y-auto bg-gradient-to-b from-blue-50 to-white rounded-xl p-6 shadow-lg">
+      {/* Path line – curved or straight */}
+      <div className="absolute left-1/2 top-0 bottom-0 w-2 bg-gray-300 transform -translate-x-1/2" />
+
+      <div className="flex flex-col items-center gap-12 py-8">
+        {units.map((unit) => (
+          <div
+            key={unit.id}
+            className="relative flex flex-col items-center cursor-pointer group"
+            onClick={() => setSelectedUnit(unit.id)}
+          >
+            {/* Unit number label */}
+            <div className="text-sm font-bold text-gray-600 mb-2">
+              Unit {unit.id}
+              {unit.current && <span className="ml-2 text-green-600">(Current)</span>}
+            </div>
+
+            {/* Lesson circles row */}
+            <div className="flex gap-3 flex-wrap justify-center max-w-[400px]">
+              {Array.from({ length: circlesPerUnit }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center border-4 transition-all ${
+                    unit.completed
+                      ? 'bg-green-500 border-green-600'
+                      : unit.current
+                      ? 'bg-yellow-400 border-yellow-600 animate-pulse'
+                      : 'bg-gray-300 border-gray-400'
+                  }`}
+                >
+                  {unit.completed ? (
+                    <Star className="w-5 h-5 text-white fill-white" />
+                  ) : (
+                    <span className="text-xs font-bold text-white">{idx + 1}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Treasure Chest(s) – 1 for English, 3 for Chinese/Japanese/Math/Science */}
+            <div className="mt-4 flex gap-3">
+              {Array.from({ length: currentCourse === 'english' ? 1 : 3 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className={`w-12 h-12 bg-amber-500 rounded-lg flex items-center justify-center shadow-md transform hover:scale-110 transition-transform ${
+                    unit.completed ? 'opacity-50' : ''
+                  }`}
+                >
+                  <Gem className="w-7 h-7 text-white" />
+                </div>
+              ))}
+            </div>
+
+            {/* Lock if not reachable */}
+            {!unit.completed && !unit.current && selectedUnit !== unit.id && (
+              <Lock className="absolute top-0 right-0 w-6 h-6 text-red-500 bg-white rounded-full p-1" />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Selected unit tooltip / info */}
+      {selectedUnit && (
+        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-white p-6 rounded-xl shadow-2xl border max-w-md w-full">
+          <h3 className="text-lg font-bold">Unit {selectedUnit}</h3>
+          <p className="text-gray-600 mt-2">
+            {units.find(u => u.id === selectedUnit)?.completed
+              ? 'Completed! Great job!'
+              : 'Start this unit to unlock more circles and chests.'}
+          </p>
+          <button className="mt-4 bg-blue-600 text-white px-6 py-3 rounded-lg w-full">
+            Go to Unit {selectedUnit}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}// src/components/gary/GaryMascot.tsx
+import { useEffect, useState } from 'react';
+
+const garyPhrases = [
+  "Hey there! Ready to learn something new?",
+  "You've got this! Keep going!",
+  "Wow, {streak} day streak? You're on fire!",
+  "Need help? Just ask me!",
+  "Surprise! New section available!",
+  "Great job on that unit!",
+  "Don't forget to practice in the Hub today!",
+  "Gary believes in you!",
+];
+
+interface GaryMascotProps {
+  context?: 'welcome' | 'mistake' | 'success' | 'new-section' | 'random';
+  streak?: number;
+}
+
+export default function GaryMascot({ context = 'random', streak = 0 }: GaryMascotProps) {
+  const [phrase, setPhrase] = useState('');
+
+  useEffect(() => {
+    let selected = garyPhrases[Math.floor(Math.random() * garyPhrases.length)];
+
+    if (context === 'welcome') selected = "Hey Timothy! Welcome back!";
+    if (context === 'mistake') selected = "Oops! Close one—want me to explain?";
+    if (context === 'success') selected = "Nailed it! You're getting stronger!";
+    if (context === 'new-section') selected = "Surprise! New section unlocked!";
+    if (streak > 0) selected = selected.replace('{streak}', streak.toString());
+
+    setPhrase(selected);
+  }, [context, streak]);
+
+  return (
+    <div className="fixed bottom-8 right-8 flex flex-col items-end z-50 animate-fade-in">
+      {/* Speech bubble */}
+      <div className="bg-white p-4 rounded-2xl rounded-br-none shadow-lg max-w-xs mb-3 border border-gray-200">
+        <p className="text-gray-800 font-medium">{phrase}</p>
+      </div>
+
+      {/* Gary image / avatar */}
+      <div className="w-20 h-20 bg-blue-500 rounded-full overflow-hidden border-4 border-white shadow-xl transform hover:scale-110 transition-transform">
+        <img
+          src="/gary/happy.png" // Place your Gary PNG in public/gary/
+          alt="Gary the mascot"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    </div>
+  );
+}
