@@ -1,0 +1,133 @@
+// src/features/english/EnglishSection.tsx
+import { useState } from 'react';
+import { Gem, Star, Lock, ChevronRight } from 'lucide-react';
+
+// Mock data for English course (Section 1 example with 180 units)
+// In real app, this would come from useLatestCourseData() or your store
+const mockEnglishUnits = Array.from({ length: 10 }, (_, i) => ({  // showing first 10 for demo
+  id: i + 1,
+  completed: i < 3,
+  current: i === 3,
+  circlesCompleted: i < 3 ? 8 : i === 3 ? 4 : 0,  // out of 8 circles per unit
+}));
+
+export default function EnglishSection() {
+  const [selectedUnit, setSelectedUnit] = useState<number | null>(null);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white p-6">
+      {/* Header */}
+      <header className="mb-8 text-center">
+        <h1 className="text-3xl font-bold text-blue-800 mb-2">English Course - Section 1</h1>
+        <p className="text-gray-600">180 units • B1 to C2 level • 8 lesson circles per unit</p>
+      </header>
+
+      {/* Main Map Container */}
+      <div className="relative max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+        {/* Path background */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none">
+          <div className="w-full h-full bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200" />
+        </div>
+
+        <div className="relative z-10 p-8">
+          <div className="flex flex-col gap-16">
+            {mockEnglishUnits.map((unit) => (
+              <div
+                key={unit.id}
+                className="relative"
+                onClick={() => setSelectedUnit(unit.id)}
+              >
+                {/* Unit Label */}
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg ${
+                    unit.completed ? 'bg-green-500' :
+                    unit.current ? 'bg-yellow-500 animate-pulse' :
+                    'bg-gray-400'
+                  }`}>
+                    {unit.id}
+                  </div>
+                  <h3 className="text-xl font-semibold">
+                    Unit {unit.id}
+                    {unit.current && <span className="ml-2 text-yellow-600">(Current)</span>}
+                    {unit.completed && <span className="ml-2 text-green-600">✓ Completed</span>}
+                  </h3>
+                </div>
+
+                {/* Lesson Circles */}
+                <div className="flex flex-wrap gap-4 mb-4 max-w-2xl">
+                  {Array.from({ length: 8 }).map((_, idx) => {
+                    const isCompleted = idx < unit.circlesCompleted;
+                    return (
+                      <div
+                        key={idx}
+                        className={`w-14 h-14 rounded-full flex items-center justify-center border-4 transition-all duration-300 ${
+                          isCompleted
+                            ? 'bg-green-100 border-green-500'
+                            : unit.current && idx === unit.circlesCompleted
+                            ? 'bg-yellow-100 border-yellow-500 animate-pulse'
+                            : 'bg-gray-100 border-gray-300'
+                        }`}
+                      >
+                        {isCompleted ? (
+                          <Star className="w-6 h-6 text-green-600 fill-green-600" />
+                        ) : (
+                          <span className="text-sm font-bold text-gray-700">{idx + 1}</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Treasure Chest */}
+                <div className="flex items-center gap-3 mb-2">
+                  <div className={`w-14 h-14 bg-amber-400 rounded-xl flex items-center justify-center shadow-md transform hover:scale-110 transition-transform ${
+                    unit.completed ? 'opacity-60' : ''
+                  }`}>
+                    <Gem className="w-8 h-8 text-white" />
+                  </div>
+                  <span className="text-sm text-amber-800 font-medium">
+                    Treasure Chest {unit.completed ? '(Opened)' : '(Available)'}
+                  </span>
+                </div>
+
+                {/* Action button when selected */}
+                {selectedUnit === unit.id && (
+                  <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                    <p className="text-blue-800 mb-3">
+                      {unit.completed
+                        ? 'You’ve mastered this unit! Ready for the next challenge?'
+                        : unit.current
+                        ? 'You’re here! Continue your journey.'
+                        : 'Unlock this unit by completing the previous ones.'}
+                    </p>
+                    <button
+                      className={`px-6 py-3 rounded-lg font-semibold flex items-center gap-2 ${
+                        unit.current
+                          ? 'bg-blue-600 text-white hover:bg-blue-700'
+                          : 'bg-gray-300 text-gray-700 cursor-not-allowed'
+                      }`}
+                      disabled={!unit.current}
+                    >
+                      {unit.current ? (
+                        <>
+                          Continue Unit <ChevronRight className="w-5 h-5" />
+                        </>
+                      ) : (
+                        'Locked'
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Floating action button example */}
+      <button className="fixed bottom-8 right-8 bg-blue-600 text-white p-5 rounded-full shadow-2xl hover:bg-blue-700 transition-transform transform hover:scale-110">
+        <span className="text-xl">Continue</span>
+      </button>
+    </div>
+  );
+}
