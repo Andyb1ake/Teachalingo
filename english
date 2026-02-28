@@ -1,383 +1,187 @@
-// src/features/english/EnglishSection.tsx
+// src/App.tsx — ENGLISH COURSE ALL-IN-ONE (map + Gary + lesson flow, no lives system)
+
 import { useState } from 'react';
-import { Gem, Star, Lock, ChevronRight } from 'lucide-react';
+import { Star, Gem, Lock, ChevronRight, ChevronLeft } from 'lucide-react';
 
-// Mock data for English course (Section 1 example with 180 units)
-// In real app, this would come from useLatestCourseData() or your store
-const mockEnglishUnits = Array.from({ length: 10 }, (_, i) => ({  // showing first 10 for demo
-  id: i + 1,
-  completed: i < 3,
-  current: i === 3,
-  circlesCompleted: i < 3 ? 8 : i === 3 ? 4 : 0,  // out of 8 circles per unit
-}));
-
-export default function EnglishSection() {
-  const [selectedUnit, setSelectedUnit] = useState<number | null>(null);
-
+// ────────────────────────────────────────────────
+// GARY MASCOT
+function GaryMascot({ message = "Hey! Ready to dive into English?" }: { message?: string }) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white p-6">
-      {/* Header */}
-      <header className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-blue-800 mb-2">English Course - Section 1</h1>
-        <p className="text-gray-600">180 units • B1 to C2 level • 8 lesson circles per unit</p>
-      </header>
+    <div className="fixed bottom-8 right-8 flex flex-col items-end z-50 animate-fade-in">
+      <div className="bg-white p-5 rounded-2xl rounded-br-none shadow-xl max-w-xs mb-4 border border-gray-200">
+        <p className="text-gray-800 font-medium leading-relaxed">{message}</p>
+      </div>
+      <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-2xl hover:scale-110 transition-transform duration-300">
+        <img
+          src="https://images.unsplash.com/photo-1618005182384-a83a8bd5c95c?w=200&h=200&fit=crop&crop=faces&auto=format&q=80"
+          alt="Gary the mascot"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    </div>
+  );
+}
 
-      {/* Main Map Container */}
-      <div className="relative max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
-        {/* Path background */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <div className="w-full h-full bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200" />
+// ────────────────────────────────────────────────
+// ENGLISH COURSE COMPONENT (map + lesson flow)
+export default function EnglishCourse() {
+  const [view, setView] = useState<'map' | 'lesson'>('map');
+  const [selectedUnit, setSelectedUnit] = useState<number | null>(null);
+  const [currentQuestion, setCurrentQuestion] = useState(1);
+
+  // Mock data for English course (Section 1 example — 180 units total, showing 12 here)
+  const units = Array.from({ length: 12 }, (_, i) => ({
+    id: i + 1,
+    completed: i < 4,
+    current: i === 4,
+    circles: 8,     // English: 8 lesson circles per unit
+    chests: 1,      // English: 1 treasure chest per unit
+  }));
+
+  const handleNextQuestion = () => {
+    if (currentQuestion < 20) setCurrentQuestion(currentQuestion + 1);
+  };
+
+  if (view === 'lesson') {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-20 pb-20 px-6">
+        <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-10">
+          <button
+            onClick={() => {
+              setView('map');
+              setCurrentQuestion(1);
+            }}
+            className="mb-8 flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium"
+          >
+            <ChevronLeft className="w-5 h-5" /> Back to Map
+          </button>
+
+          <h1 className="text-3xl font-bold text-center mb-10">
+            Unit {selectedUnit} • Lesson {currentQuestion}/20
+          </h1>
+
+          <div className="w-full bg-gray-200 h-3 rounded-full mb-12 overflow-hidden">
+            <div
+              className="bg-indigo-600 h-full transition-all duration-500"
+              style={{ width: `${(currentQuestion / 20) * 100}%` }}
+            />
+          </div>
+
+          <p className="text-xl text-center mb-10 font-medium">
+            Sample Question {currentQuestion}: Choose the correct sentence.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+            {[
+              "She go to school every day.",
+              "She goes to school every day.",
+              "She going to school every day.",
+              "She is go to school every day.",
+            ].map((opt, i) => (
+              <button
+                key={i}
+                onClick={handleNextQuestion}
+                className="p-6 border-2 rounded-xl text-lg hover:bg-indigo-50 transition border-indigo-200"
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+
+          <p className="text-center text-gray-600 italic">
+            (Full lesson: 20 questions — multiple choice, fill-in, speak, write-out, etc.)
+          </p>
         </div>
 
-        <div className="relative z-10 p-8">
-          <div className="flex flex-col gap-16">
-            {mockEnglishUnits.map((unit) => (
+        <GaryMascot message="This is just a demo lesson! In full version, Gary would react after each answer." />
+      </div>
+    );
+  }
+
+  // ────────────────────────────────────────────────
+  // MAP VIEW
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-indigo-50 via-purple-50 to-blue-50 pt-20 pb-20 px-6">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-center mb-12 text-indigo-900">
+          English Course Map
+        </h1>
+
+        <div className="relative bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl p-12 border border-indigo-100/60">
+          {/* Decorative path line */}
+          <div className="absolute inset-y-0 left-1/2 w-4 bg-gradient-to-b from-blue-300 via-purple-300 to-pink-300 transform -translate-x-1/2 opacity-20 rounded-full" />
+
+          <div className="flex flex-col gap-24">
+            {units.map((u) => (
               <div
-                key={unit.id}
-                className="relative"
-                onClick={() => setSelectedUnit(unit.id)}
+                key={u.id}
+                className="relative flex flex-col items-center cursor-pointer group"
+                onClick={() => {
+                  setSelectedUnit(u.id);
+                  setView('lesson');
+                }}
               >
-                {/* Unit Label */}
-                <div className="flex items-center gap-3 mb-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg ${
-                    unit.completed ? 'bg-green-500' :
-                    unit.current ? 'bg-yellow-500 animate-pulse' :
-                    'bg-gray-400'
+                {/* Unit label */}
+                <div className="flex items-center gap-4 mb-5">
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg ring-4 ring-offset-2 ${
+                    u.completed ? 'bg-green-500 ring-green-300' :
+                    u.current ? 'bg-yellow-500 ring-yellow-300 animate-pulse' :
+                    'bg-gray-400 ring-gray-300'
                   }`}>
-                    {unit.id}
+                    {u.id}
                   </div>
-                  <h3 className="text-xl font-semibold">
-                    Unit {unit.id}
-                    {unit.current && <span className="ml-2 text-yellow-600">(Current)</span>}
-                    {unit.completed && <span className="ml-2 text-green-600">✓ Completed</span>}
-                  </h3>
+                  <h2 className="text-2xl font-bold text-gray-800">
+                    Unit {u.id}
+                    {u.current && <span className="ml-3 text-yellow-600 text-xl font-semibold">(Current)</span>}
+                    {u.completed && <span className="ml-3 text-green-600 text-xl">✓</span>}
+                  </h2>
                 </div>
 
-                {/* Lesson Circles */}
-                <div className="flex flex-wrap gap-4 mb-4 max-w-2xl">
-                  {Array.from({ length: 8 }).map((_, idx) => {
-                    const isCompleted = idx < unit.circlesCompleted;
+                {/* Lesson circles */}
+                <div className="flex flex-wrap gap-4 justify-center mb-6 max-w-3xl">
+                  {Array.from({ length: u.circles }).map((_, j) => {
+                    const done = j < (u.completed ? u.circles : u.current ? 5 : 0);
                     return (
                       <div
-                        key={idx}
-                        className={`w-14 h-14 rounded-full flex items-center justify-center border-4 transition-all duration-300 ${
-                          isCompleted
+                        key={j}
+                        className={`w-14 h-14 rounded-full border-4 flex items-center justify-center shadow transition-all duration-300 ${
+                          done
                             ? 'bg-green-100 border-green-500'
-                            : unit.current && idx === unit.circlesCompleted
+                            : u.current && j === 5
                             ? 'bg-yellow-100 border-yellow-500 animate-pulse'
                             : 'bg-gray-100 border-gray-300'
                         }`}
                       >
-                        {isCompleted ? (
-                          <Star className="w-6 h-6 text-green-600 fill-green-600" />
+                        {done ? (
+                          <Star className="w-7 h-7 text-green-600 fill-green-600" />
                         ) : (
-                          <span className="text-sm font-bold text-gray-700">{idx + 1}</span>
+                          j + 1
                         )}
                       </div>
                     );
                   })}
                 </div>
 
-                {/* Treasure Chest */}
-                <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-14 h-14 bg-amber-400 rounded-xl flex items-center justify-center shadow-md transform hover:scale-110 transition-transform ${
-                    unit.completed ? 'opacity-60' : ''
-                  }`}>
-                    <Gem className="w-8 h-8 text-white" />
-                  </div>
-                  <span className="text-sm text-amber-800 font-medium">
-                    Treasure Chest {unit.completed ? '(Opened)' : '(Available)'}
-                  </span>
-                </div>
-
-                {/* Action button when selected */}
-                {selectedUnit === unit.id && (
-                  <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                    <p className="text-blue-800 mb-3">
-                      {unit.completed
-                        ? 'You’ve mastered this unit! Ready for the next challenge?'
-                        : unit.current
-                        ? 'You’re here! Continue your journey.'
-                        : 'Unlock this unit by completing the previous ones.'}
-                    </p>
-                    <button
-                      className={`px-6 py-3 rounded-lg font-semibold flex items-center gap-2 ${
-                        unit.current
-                          ? 'bg-blue-600 text-white hover:bg-blue-700'
-                          : 'bg-gray-300 text-gray-700 cursor-not-allowed'
+                {/* Treasure chests */}
+                <div className="flex gap-5 mb-6">
+                  {Array.from({ length: u.chests }).map((_, k) => (
+                    <div
+                      key={k}
+                      className={`w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-300 ${
+                        u.completed ? 'opacity-60 grayscale' : ''
                       }`}
-                      disabled={!unit.current}
                     >
-                      {unit.current ? (
-                        <>
-                          Continue Unit <ChevronRight className="w-5 h-5" />
-                        </>
-                      ) : (
-                        'Locked'
-                      )}
-                    </button>
-                  </div>
-                )}
+                      <Gem className="w-9 h-9 text-white drop-shadow" />
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Floating action button example */}
-      <button className="fixed bottom-8 right-8 bg-blue-600 text-white p-5 rounded-full shadow-2xl hover:bg-blue-700 transition-transform transform hover:scale-110">
-        <span className="text-xl">Continue</span>
-      </button>
-    </div>
-  );
-}
-import { useUserStore } from '@/store/useUserStore';
-import { Gem, Heart, Zap, Flame } from 'lucide-react';
-
-export default function TopBar() {
-  const { gems, hearts, energy, streak, currentCourse, setCurrentCourse } = useUserStore();
-
-  return (
-    <header className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-sm z-50">
-      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-        {/* Course Selector */}
-        <select
-          value={currentCourse}
-          onChange={(e) => setCurrentCourse(e.target.value as any)}
-          className="px-3 py-1.5 bg-gray-100 border rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="english">English</option>
-          <option value="chinese">Chinese</option>
-          <option value="japanese">Japanese</option>
-          <option value="math">Math</option>
-          <option value="science">Science</option>
-        </select>
-
-        {/* Resources */}
-        <div className="flex items-center gap-5 text-sm">
-          <div className="flex items-center gap-1.5">
-            <Gem className="w-5 h-5 text-purple-600" />
-            <span className="font-semibold">{gems}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Heart className="w-5 h-5 text-red-500" />
-            <span className="font-semibold">{hearts}/3</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Zap className="w-5 h-5 text-yellow-500" />
-            <span className="font-semibold">{energy}/40</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Flame className="w-5 h-5 text-orange-500" />
-            <span className="font-semibold">{streak}d</span>
-          </div>
-        </div>
-      </div>
-    </header>
-  );
-}import { useState } from 'react';
-import { useUserStore } from '@/store/useUserStore';
-import GaryMascot from '@/components/gary/GaryMascot';
-
-export default function LessonScreen() {
-  const { loseHeart, useEnergy, hearts, energy } = useUserStore();
-  const [currentQuestion, setCurrentQuestion] = useState(1);
-  const [showExplain, setShowExplain] = useState(false);
-  const totalQuestions = 20;
-
-  const handleWrongAnswer = () => {
-    if (hearts > 0) {
-      loseHeart();
-    } else if (energy > 0) {
-      useEnergy();
-    }
-    setShowExplain(true);
-  };
-
-  const handleNext = () => {
-    if (currentQuestion < totalQuestions) {
-      setCurrentQuestion(currentQuestion + 1);
-      setShowExplain(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50 pt-20 pb-24 px-6">
-      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8">
-        <h2 className="text-2xl font-bold text-center mb-6">
-          Question {currentQuestion} of {totalQuestions}
-        </h2>
-
-        {/* Progress bar */}
-        <div className="w-full bg-gray-200 rounded-full h-2.5 mb-8">
-          <div
-            className="bg-blue-600 h-2.5 rounded-full transition-all"
-            style={{ width: `${(currentQuestion / totalQuestions) * 100}%` }}
-          />
-        </div>
-
-        {/* Question placeholder */}
-        <div className="text-center mb-10">
-          <p className="text-xl font-medium mb-4">
-            What does "こんにちは" mean in English?
-          </p>
-          <div className="grid grid-cols-2 gap-4">
-            {['Hello', 'Goodbye', 'Thank you', 'Please'].map((opt, i) => (
-              <button
-                key={i}
-                onClick={i === 0 ? handleNext : handleWrongAnswer}
-                className={`p-4 rounded-lg border-2 font-medium transition-all ${
-                  i === 0
-                    ? 'border-green-500 hover:bg-green-50'
-                    : 'border-red-300 hover:bg-red-50'
-                }`}
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Explain My Mistakes popup */}
-        {showExplain && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl">
-              <h3 className="text-xl font-bold mb-4">Let's learn from this!</h3>
-              <p className="text-gray-700 mb-6">
-                "こんにちは" means "Hello" in English. It's a polite greeting used any time of day.
-                <br /><br />
-                Common mistake: Mixing it with "こんばんは" (good evening).
-              </p>
-              <button
-                onClick={() => setShowExplain(false)}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg w-full font-medium hover:bg-blue-700"
-              >
-                Got it! Next question
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Gary appears on mistake */}
-      {showExplain && <GaryMascot context="mistake" />}
-    </div>
-  );
-}import TopBar from './components/layout/TopBar';
-import EnglishSection from './features/english/EnglishSection';
-import LessonScreen from './features/lesson/LessonScreen';
-import GaryMascot from './components/gary/GaryMascot';
-
-function App() {
-  // Toggle between map and lesson for demo
-  const [showLesson, setShowLesson] = useState(false);
-
-  return (
-    <div className="relative min-h-screen">
-      <TopBar />
-
-      {showLesson ? (
-        <LessonScreen />
-      ) : (
-        <>
-          <EnglishSection />
-          <button
-            onClick={() => setShowLesson(true)}
-            className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-8 py-4 rounded-full shadow-xl hover:bg-green-700 text-lg font-bold z-40"
-          >
-            Start Lesson Demo
-          </button>
-        </>
-      )}
-
-      <GaryMascot context="welcome" streak={useUserStore.getState().streak} />
-    </div>
-  );
-}
-
-export default App;// src/App.tsx
-import { useState } from 'react';
-import TopBar from './components/layout/TopBar';
-import EnglishSection from './features/english/EnglishSection';
-import LessonScreen from './features/lesson/LessonScreen';
-import PracticeHub from './features/practice-hub/PracticeHub';
-import GaryMascot from './components/gary/GaryMascot';
-import { useUserStore } from './store/useUserStore';
-
-export default function App() {
-  const [view, setView] = useState<'dashboard' | 'lesson' | 'practice'>('dashboard');
-
-  return (
-    <div className="relative min-h-screen bg-gray-50">
-      <TopBar />
-
-      <main className="pt-20 pb-24 px-4 max-w-7xl mx-auto">
-        {view === 'dashboard' && (
-          <>
-            <EnglishSection />
-            <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex gap-4 z-40">
-              <button
-                onClick={() => setView('lesson')}
-                className="bg-blue-600 text-white px-8 py-4 rounded-full shadow-xl hover:bg-blue-700 text-lg font-bold"
-              >
-                Start Lesson
-              </button>
-              <button
-                onClick={() => setView('practice')}
-                className="bg-purple-600 text-white px-8 py-4 rounded-full shadow-xl hover:bg-purple-700 text-lg font-bold"
-              >
-                Practice Hub
-              </button>
-            </div>
-          </>
-        )}
-
-        {view === 'lesson' && <LessonScreen />}
-        {view === 'practice' && <PracticeHub />}
-      </main>
-
-      <GaryMascot context="welcome" streak={useUserStore.getState().streak} />
-    </div>
-  );
-}
-// src/features/practice-hub/PracticeHub.tsx
-import GaryMascot from '@/components/gary/GaryMascot';
-
-export default function PracticeHub() {
-  const activities = [
-    { name: 'Role Plays', xp: 25, desc: 'Converse with Gary in 575+ scenarios' },
-    { name: 'Teach Mode', xp: 35, desc: 'Sit back — Gary teaches you' },
-    { name: 'Oral Mode', xp: 30, desc: 'Record & get speaking feedback' },
-    { name: 'Listening Mode', xp: 25, desc: 'Deep audio challenges' },
-    { name: 'Composition Mode', xp: 40, desc: 'Write essays & get corrections' },
-    { name: 'Flashcards', xp: 20, desc: 'Spaced repetition vocab' },
-    { name: 'Mini-Games', xp: '15–30', desc: 'Quick fun drills' },
-    // Add the rest as cards...
-  ];
-
-  return (
-    <div className="bg-white rounded-2xl shadow-xl p-8">
-      <h1 className="text-3xl font-bold text-center mb-8">Practice Hub</h1>
-      <p className="text-center text-gray-600 mb-10">
-        Unlimited, free practice — no hearts or energy lost!
-      </p>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {activities.map((act, i) => (
-          <div
-            key={i}
-            className="bg-gradient-to-br from-blue-50 to-purple-50 p-6 rounded-xl border border-blue-100 hover:shadow-lg transition-shadow cursor-pointer"
-          >
-            <h3 className="text-xl font-semibold mb-2">{act.name}</h3>
-            <p className="text-gray-600 mb-4">{act.desc}</p>
-            <div className="text-sm font-medium text-blue-600">
-              {act.xp} XP per session
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <GaryMascot context="random" />
+      <GaryMascot message="Click any unit to start the lesson! Gary's ready to help." />
     </div>
   );
 }
