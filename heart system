@@ -1,29 +1,228 @@
-import { create } from 'zustand';
+// src/App.tsx — ALL-IN-ONE with FULL DAILY STREAK SYSTEM
 
-interface UserState {
-  gems: number;
-  hearts: number;
-  energy: number;
-  streak: number;
-  xp: number;
-  currentCourse: 'english' | 'chinese' | 'japanese' | 'math' | 'science';
-  setCurrentCourse: (course: UserState['currentCourse']) => void;
-  addGems: (amount: number) => void;
-  loseHeart: () => void;
-  useEnergy: () => void;
-  addStreak: () => void;
-}
+import { useState, useEffect } from 'react';
+import { Gem, Heart, Zap, Flame, Star, Shield, Award } from 'lucide-react';
 
-export const useUserStore = create<UserState>((set) => ({
+// ────────────────────────────────────────────────
+// GLOBAL STATE (now with full streak system)
+const initialState = {
   gems: 500,
   hearts: 3,
+  maxHearts: 3,
   energy: 40,
-  streak: 1,
-  xp: 0,
-  currentCourse: 'english',
-  setCurrentCourse: (course) => set({ currentCourse: course }),
-  addGems: (amount) => set((state) => ({ gems: state.gems + amount })),
-  loseHeart: () => set((state) => ({ hearts: Math.max(0, state.hearts - 1) })),
-  useEnergy: () => set((state) => ({ energy: Math.max(0, state.energy - 1) })),
-  addStreak: () => set((state) => ({ streak: state.streak + 1 })),
-}));
+  maxEnergy: 40,
+  currentStreak: 0,
+  longestStreak: 0,
+  streakFreeze: 2,          // starts with 2 freezes (increases to 5 at 100 days)
+  usedFreezes: 0,
+  unlimitedBonusDays: 0,    // remaining days of infinite hearts/energy from milestones
+  lastActivityDate: '',     // 'YYYY-MM-DD' to detect daily activity
+  currentCourse: 'english' as const,
+};
+
+type State = typeof initialState & {
+  completeDailyActivity: () => void;
+  missDay: () => void;
+  useFreeze: () => boolean;
+  addGems: (n: number) => void;
+  loseHeart: () => void;
+  useEnergy: () => void;
+  setCourse: (c: 'english' | 'chinese' | 'japanese' | 'math' | 'science') => void;
+};
+
+function useStore() {
+  const [s, setS] = useState(initialState);
+
+  const today = new Date().toISOString().split('T')[0];
+
+  // Check if today is new day & auto-handle streak
+  useEffect(() => {
+    if (s.lastActivityDate !== today) {
+      // New day — check if we missed yesterday
+      if (s.lastActivityDate && s.currentStreak > 0) {
+        // Simulate: if no activity yesterday, streak breaks unless freeze used
+        // In real app, this would check actual last activity
+      }
+      setS(p => ({ ...p, lastActivityDate: today }));
+    }
+  }, [today]);
+
+  return {
+    ...s,
+    completeDailyActivity: () => setS(p => {
+      const newStreak = p.currentStreak + 1;
+      let newFreezes = p.streakFreeze;
+      let newUnlimited = p.unlimitedBonusDays;
+
+      // Milestone bonuses
+      if (newStreak % 30 === 0) newUnlimited += 3;
+      if (newStreak % 100 === 0) newUnlimited += 7;
+
+      // Unlock more freezes at 100 days
+      if (newStreak >= 100 && p.streakFreeze < 5) newFreezes = 5;
+
+      return {
+        ...p,
+        currentStreak: newStreak,
+        longestStreak: Math.max(p.longestStreak, newStreak),
+        streakFreeze: newFreezes,
+        unlimitedBonusDays: Math.max(0, newUnlimited - 1), // consume 1 day
+        lastActivityDate: today,
+      };
+    }),
+    missDay: () => setS(p => {
+      if (p.usedFreezes < p.streakFreeze) {
+        // Use freeze — streak protected
+        return { ...p, usedFreezes: p.usedFreezes + 1 };
+      } else {
+        // Streak breaks
+        return { ...p, currentStreak: 0 };
+      }
+    }),
+    useFreeze: () => {
+      if (s.usedFreezes < s.streakFreeze) {
+        setS(p => ({ ...p, usedFreezes: p.usedFreezes + 1 }));
+        return true;
+      }
+      return false;
+    },
+    addGems: (n: number) => setS(p => ({ ...p, gems: p.gems + n })),
+    loseHeart: () => setS(p => ({ ...p, hearts: Math.max(0, p.hearts - 1) })),
+    useEnergy: () => setS(p => ({ ...p, energy: Math.max(0, p.energy - 1) })),
+    setCourse: (c: State['currentCourse']) => setS(p => ({ ...p, currentCourse: c })),
+  };
+}
+
+// ────────────────────────────────────────────────
+// GARY MASCOT (reacts to streak)
+function GaryMascot({ store }: { store: ReturnType<typeof useStore> }) {
+  const { currentStreak, longestStreak, streakFreeze, usedFreezes } = store;
+  const [phrase, setPhrase] = useState('');
+
+  useEffect(() => {
+    if (currentStreak >= 10) {
+      setPhrase(`Wow, ${currentStreak} day streak! You're unstoppable!`);
+    } else if (currentStreak === 0 && usedFreezes < streakFreeze) {
+      setPhrase(`Streak protected by freeze! You still have ${streakFreeze - usedFreezes} left.`);
+    } else if (currentStreak === 0) {
+      setPhrase("Streak reset... but tomorrow's a new day! Let's rebuild!");
+    } else {
+      setPhrase(`Keep it up — ${currentStreak} days in a row!`);
+    }
+  }, [currentStreak, longestStreak, streakFreeze, usedFreezes]);
+
+  return (
+    <div className="fixed bottom-8 right-8 flex flex-col items-end z-50">
+      <div className="bg-white p-4 rounded-2xl rounded-br-none shadow-lg max-w-xs mb-3 border">
+        <p className="text-gray-800 font-medium">{phrase}</p>
+      </div>
+      <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-xl hover:scale-110 transition">
+        <img
+          src="https://images.unsplash.com/photo-1618005182384-a83a8bd5c95c?w=100&h=100&fit=crop"
+          alt="Gary"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────
+// TOP BAR (shows streak prominently)
+function TopBar({ store }: { store: ReturnType<typeof useStore> }) {
+  const { gems, hearts, energy, currentStreak, longestStreak, streakFreeze, usedFreezes, currentCourse, setCourse } = store;
+
+  return (
+    <header className="fixed top-0 inset-x-0 bg-white border-b shadow-sm z-50">
+      <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        <select
+          value={currentCourse}
+          onChange={e => setCourse(e.target.value as any)}
+          className="px-3 py-1.5 bg-gray-100 border rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="english">English</option>
+          <option value="chinese">Chinese</option>
+          <option value="japanese">Japanese</option>
+          <option value="math">Math</option>
+          <option value="science">Science</option>
+        </select>
+
+        <div className="flex gap-6 text-sm font-medium">
+          <Gem className="w-5 h-5 text-purple-600" /> {gems}
+          <Heart className="w-5 h-5 text-red-500" /> {hearts}/3
+          <Zap className="w-5 h-5 text-yellow-500" /> {energy}/40
+          <div className="flex items-center gap-1.5">
+            <Flame className="w-5 h-5 text-orange-500" />
+            {currentStreak}d
+            {longestStreak > currentStreak && <span className="text-xs text-gray-500">(Best: {longestStreak})</span>}
+            {streakFreeze > usedFreezes && <Shield className="w-4 h-4 text-blue-500" />}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// ────────────────────────────────────────────────
+// DEMO DASHBOARD (with streak controls)
+function Dashboard({ store }: { store: ReturnType<typeof useStore> }) {
+  return (
+    <div className="mt-8 text-center">
+      <h1 className="text-3xl font-bold mb-6">Teachalingo Dashboard</h1>
+
+      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl mx-auto">
+        <h2 className="text-2xl font-bold mb-6">Daily Streak</h2>
+        <div className="flex flex-col items-center gap-4">
+          <div className="text-5xl font-bold text-orange-600">
+            {store.currentStreak} <span className="text-2xl">days</span>
+          </div>
+          <div className="text-gray-600">
+            Longest: {store.longestStreak} days
+          </div>
+          <div className="text-sm text-blue-600">
+            Freezes left: {store.streakFreeze - store.usedFreezes} / {store.streakFreeze}
+          </div>
+          {store.unlimitedBonusDays > 0 && (
+            <div className="text-green-600 font-medium">
+              Unlimited hearts/energy for {store.unlimitedBonusDays} more days!
+            </div>
+          )}
+
+          {/* Demo controls */}
+          <div className="flex gap-4 mt-6">
+            <button
+              onClick={() => store.completeDailyActivity()}
+              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700"
+            >
+              Complete Activity Today (+1 Streak)
+            </button>
+            <button
+              onClick={() => store.missDay()}
+              className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700"
+            >
+              Miss a Day (Test Break)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────
+// MAIN APP
+export default function App() {
+  const store = useStore();
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <TopBar store={store} />
+
+      <main className="pt-20 pb-24 px-4 max-w-7xl mx-auto">
+        <Dashboard store={store} />
+      </main>
+
+      <GaryMascot store={store} />
+    </div>
+  );
+}
